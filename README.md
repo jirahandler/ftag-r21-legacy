@@ -1,4 +1,4 @@
-# What does this package do?
+# About
 It uses legacy CERN ATLAS FTAG tools to get flavor tagging information from FTAG1/FTAG2 DAODs in the form of ntuples.
 
 ## Setup Instructions
@@ -25,9 +25,9 @@ Every time (except the first time which you just clone this package) you need to
 source memo
 ```
 
-## To submit samples on the grid:
+## To submit samples on the grid
 
-To submit the ntuple to grid, see https://gitlab.cern.ch/atlas-flavor-tagging-tools/FlavourTagPerformanceFramework/blob/freshstart/README.md for more details.
+To submit the ntuple production to grid, see https://gitlab.cern.ch/atlas-flavor-tagging-tools/FlavourTagPerformanceFramework/blob/freshstart/README.md for more details.
 
 You need to do the submit under `run/` directory by first doing:
 
