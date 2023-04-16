@@ -3,7 +3,7 @@ It uses legacy CERN ATLAS FTAG tools to get flavor tagging information from FTAG
 
 ## Setup Instructions
 
-First make an new directory and do:
+First make a new directory and do:
 ```
 setupATLAS -q
 lsetup git
