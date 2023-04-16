@@ -1,7 +1,7 @@
 # What does this package do?
 It uses legacy CERN ATLAS FTAG tools to get flavor tagging information from FTAG1/FTAG2 DAODs in the form of ntuples.
 
-##Setup Instructions
+## Setup Instructions
 
 First make an new directory and do:
 ```
@@ -25,7 +25,7 @@ Every time (except the first time which you just clone this package) you need to
 source memo
 ```
 
-##To submit samples on the grid:
+## To submit samples on the grid:
 
 To submit the ntuple to grid, see https://gitlab.cern.ch/atlas-flavor-tagging-tools/FlavourTagPerformanceFramework/blob/freshstart/README.md for more details.
 
