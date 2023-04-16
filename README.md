@@ -18,9 +18,10 @@ source memo
 #source setup.sh
 
 ```
-Once the setup is done, you are now in the `run/
+Once the setup is done, you are now in the `run/` directory
 
 Every time (except the first time which you just clone this package) you need to setup the ackage in the `run/` directory by doing:
+
 ```
 source memo
 ```
@@ -36,9 +37,9 @@ voms-proxy-init --voms atlas
 lsetup rucio
 lsetup panda
 ```
-Then from the `run` directory edit the `../source/FlavourTagPerformanceFramework/scripts/grid-submit.sh` with the datasets you want to run over. 
+Then from the `run/` directory edit the `../source/FlavourTagPerformanceFramework/scripts/grid-submit.sh` with the datasets you want to run over. 
 
-Then from the `run` directory itself excecute `grid-submit.sh` :
+Then from the `run/` directory itself excecute `grid-submit.sh` :
 
 ```
 ../source/FlavourTagPerformanceFramework/scripts/grid-submit.sh
