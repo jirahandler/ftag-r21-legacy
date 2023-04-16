@@ -1,0 +1,7 @@
+<lcgdict>
+  <class name="Dummy"/>
+  <class name="vector<vector<int> >"/>
+  <class name="vector<vector<double> >"/>
+  <class name="vector<vector<float> >"/>
+  <class name="vector<vector<bool> >"/>
+</lcgdict>

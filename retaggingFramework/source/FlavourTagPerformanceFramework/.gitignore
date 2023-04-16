@@ -1,0 +1,12 @@
+# ignore emacs-specific files
+*~
+
+# ignore athena-specific files
+.asetup.save
+CMakeLists.txt
+
+# ignore things that are built by the setup scripts
+build/
+run/
+athena/
+*.pyc

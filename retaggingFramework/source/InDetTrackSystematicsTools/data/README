@@ -1,0 +1,5 @@
+This folder can be used by developers to place local calibration files for testing before requesting them to be put in the calibration database (at /cvmfs/atlas.cern.ch/repo/sw/database/GroupData/InDetTrackSystematicsTools/).
+
+e.g. to configure the calibration file calibFile.root in the job options, set it's path to InDetTrackSystematicsTools/calibFile.root
+
+Do not add files in this directory into git - the point of the calibration DB is to keep large data files out of the git repository.

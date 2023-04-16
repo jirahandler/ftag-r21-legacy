@@ -1,0 +1,15 @@
+setupATLAS -2
+lsetup git
+
+#cd ljets_MCCalibration
+#rm -rf retaggingFramework/build
+#mkdir -p retaggingFramework/build
+#mkdir -p retaggingFramework/run
+cd retaggingFramework/build
+#rm -rf ./*
+#asetup AthDerivation,21.2.62.0,here
+asetup --restore
+#cmake ../source
+#make
+source x86_64-centos7-gcc62-opt/setup.sh
+cd ../run

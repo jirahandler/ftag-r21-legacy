@@ -1,0 +1,79 @@
+
+CHANGES FOR 20.7 RUNNING
+- set doSMT to false: OK in all cases
+
+- added PoolAODInput setting in the jobOptions:
+jp.AthenaCommonFlags.PoolAODInput = [ dirStr+oneFile ] #+++++++++++++
+This is needed by the AODFix used in 20.7
+
+- Addded CalibrationTag config file in jobOption:
+BTaggingFlags.CalibrationTag = 'BTagCalibRUN12-08-18'
+This is needed by MV2c100 and used as pre-exec in Derivarion production
+
+- Downloaded AODFix locally and deactivated all JET and MET Fixes in:
+/Reconstruction/AODFix/python/AODFix_r207.py
+Line 117 to the end
+Othewise I have seg-faults when overwriting the track collection name!!
+THIS IS BIG
+
+- In the same AODFix, deactivated also:
+topSequence+=xAOD__MuonAODFixAlg()
+It gives FATAL signal because of missing ::MuonSpectrometerPt
+
+------------------------------
+- WORKING only in 20.7.6.1!!
+------------------------------
+
+- Update JES calib files: "JES_2015dataset_recommendation_Feb2016.config" (isAF2 "JES_2015dataset_recommendation_AFII_Feb2016.config")
+But not to the latest one JES_MC15cRecommendation_May2016.config which is not in Derivation 20.7.6.1
+
+- Added in jobOption:
+  mv2c10 =BTagConf.getTool("MV2c10Tag", "BTagTrackToJetAssociator","AntiKt4EMTopo")#+++++++++++
+
+- added mv2c10 variables and flipped variables to the ntuple. Are they working?
+
+
+
+/////////////////////////////////////////////////////////////////////
+//// PREVIOUS DETAILED CHANGES
+/////////////////////////////////////////////////////////////////////
+
+In btagIBLAnalysisAlg.cxx
+
+~line 304
+  v_jet_ip2dNT_llr = new std::vector<double>();
+  v_jet_ip3dNT_llr = new std::vector<double>();
+  v_jet_sv1flip_llr = new std::vector<double>();
+  v_jet_jfflip_llr = new std::vector<double>();
+  v_jet_mv2c20flip = new std::vector<double>();
+  
+~line 610
+  tree->Branch("jet_ip2dNT_llr", &v_jet_ip2dNT_llr);
+  tree->Branch("jet_ip3dNT_llr", &v_jet_ip3dNT_llr);
+  tree->Branch("jet_sv1Flip_llr", &v_jet_sv1flip_llr);
+  tree->Branch("jet_jfFlip_llr", &v_jet_jfflip_llr);
+  tree->Branch("jet_mv2c20Flip", &v_jet_mv2c20flip);
+  
+~line 1680  
+  v_jet_mv2c20flip->push_back(bjet->auxdata<double>("MV2c20Flip_discriminant")); 
+  (quelle delle altre variabili flip sono adesso commentate perche' non ero riuscita a trovare i nomi giusti, nenache parlando con Valerio)  
+
+~line 2762  
+  v_jet_ip2dNT_llr->clear();
+  v_jet_ip3dNT_llr->clear();
+  v_jet_sv1flip_llr->clear();
+  v_jet_jfflip_llr->clear();
+  v_jet_mv2c20flip->clear();  
+
+
+  
+In RetagFragment.py
+
+(all'inizio) 
+ 
+BTaggingFlags.IP3DPos=True
+BTaggingFlags.IP3DFlip=True
+BTaggingFlags.IP3DNeg=True
+BTaggingFlags.SV1Flip=True
+BTaggingFlags.JetFitterNNFlip=True
+BTaggingFlags.MV2c20Flip=True

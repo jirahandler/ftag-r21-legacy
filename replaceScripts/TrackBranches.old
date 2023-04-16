@@ -1,0 +1,589 @@
+#include "xAODTracking/TrackParticle.h"
+#include "xAODTruth/TruthParticle.h"
+#include "xAODTracking/TrackParticleContainer.h"
+#include "AthContainers/exceptions.h"
+#include "xAODBTagging/BTagging.h"
+#include "xAODTruth/TruthVertex.h"
+#include "xAODTruth/TruthEventContainer.h"
+
+
+#include "../btagAnalysis/TrackBranches.hh"
+#include "../btagAnalysis/TrackBranchBuffer.hh"
+#include "../btagAnalysis/BTagTrackAccessors.hh"
+#include "../btagAnalysis/LifetimeSigning.hh"
+
+#include "TTree.h"
+
+#include <string>
+#include <stdexcept>
+#include <memory>
+
+TrackBranches::TrackBranches():
+  m_branches(new TrackBranchBuffer),
+  m_acc(new BTagTrackAccessors),
+  m_active(false)
+{
+  typedef std::vector<std::vector<int> > vvi_t;
+  typedef std::vector<std::vector<float> > vvf_t;
+
+  m_branches->ntrk = new std::vector<int>;
+
+  m_branches->pt = new vvf_t;
+  m_branches->eta = new vvf_t;
+  m_branches->theta = new vvf_t;
+  m_branches->phi = new vvf_t;
+  m_branches->qoverp = new vvf_t;
+
+  m_branches->charge = new vvf_t;
+
+  m_branches->chi2 = new vvf_t;
+  m_branches->ndf = new vvf_t;
+
+  m_branches->nNextToInnHits = new vvi_t;
+  m_branches->nInnHits = new vvi_t;
+  m_branches->nBLHits = new vvi_t; // soo this will be deprecated
+  m_branches->nsharedBLHits = new vvi_t;
+  m_branches->nsplitBLHits = new vvi_t;
+  m_branches->nPixHits = new vvi_t;
+  m_branches->nPixHoles = new vvi_t;
+  m_branches->nsharedPixHits = new vvi_t;
+  m_branches->nsplitPixHits = new vvi_t;
+  m_branches->nSCTHits = new vvi_t;
+  m_branches->nSCTHoles = new vvi_t;
+  m_branches->nsharedSCTHits = new vvi_t;
+
+  m_branches->expectBLayerHit = new vvi_t;
+  m_branches->expectInnermostPixelLayerHit = new vvi_t;
+  m_branches->expectNextToInnermostPixelLayerHit = new vvi_t;
+
+  m_branches->d0 = new vvf_t;
+  m_branches->z0 = new vvf_t;
+
+  // actual d0 variables (not lifetime-signed)
+  m_branches->ip3d_d0 = new vvf_t;
+  m_branches->ip3d_d02D = new vvf_t;
+  m_branches->ip3d_z0 = new vvf_t;
+  m_branches->ip3d_d0sig = new vvf_t;
+  m_branches->ip3d_z0sig = new vvf_t;
+
+  m_branches->v_jet_btag_ntrk        = new std::vector<int>();
+  m_branches->v_jet_ip3d_ntrk        = new std::vector<int>();
+  m_branches->v_jet_trk_algo         = new std::vector<std::vector<int> >();
+  m_branches->v_jet_trk_vtx_X        = new std::vector<std::vector<float> >();
+  m_branches->v_jet_trk_vtx_Y        = new std::vector<std::vector<float> >();
+  m_branches->v_jet_trk_vtx_Z        = new std::vector<std::vector<float> >();
+
+  m_branches->v_jet_trk_pdg_id       = new std::vector<std::vector<int> >();
+  m_branches->v_jet_trk_barcode      = new std::vector<std::vector<int> >();
+  m_branches->v_jet_trk_parent_pdgid = new std::vector<std::vector<int> >();
+  m_branches->v_jet_trk_IP3D_grade   = new std::vector<std::vector<int> >();
+  m_branches->v_jet_trk_IP3D_llr     = new std::vector<std::vector<float> >();
+
+}
+
+TrackBranches::~TrackBranches()
+{
+
+  delete m_branches->ntrk;
+
+  delete m_branches->pt;
+  delete m_branches->eta;
+  delete m_branches->theta;
+  delete m_branches->phi;
+  delete m_branches->qoverp;
+
+  delete m_branches->charge;
+
+  delete m_branches->chi2;
+  delete m_branches->ndf;
+
+  delete m_branches->nNextToInnHits;
+  delete m_branches->nInnHits;
+  delete m_branches->nBLHits; // soo this will be deprecated
+  delete m_branches->nsharedBLHits;
+  delete m_branches->nsplitBLHits;
+  delete m_branches->nPixHits;
+  delete m_branches->nPixHoles;
+  delete m_branches->nsharedPixHits;
+  delete m_branches->nsplitPixHits;
+  delete m_branches->nSCTHits;
+  delete m_branches->nSCTHoles;
+  delete m_branches->nsharedSCTHits;
+
+  delete m_branches->expectBLayerHit;
+  delete m_branches->expectInnermostPixelLayerHit;
+  delete m_branches->expectNextToInnermostPixelLayerHit;
+
+  delete m_branches->d0;
+  delete m_branches->z0;
+  // actual d0 variables (not lifetime-signed)
+  delete m_branches->ip3d_d0;
+  delete m_branches->ip3d_d02D;
+  delete m_branches->ip3d_z0;
+  delete m_branches->ip3d_d0sig;
+  delete m_branches->ip3d_z0sig;
+
+  delete m_branches->v_jet_trk_algo;
+  delete m_branches->v_jet_trk_vtx_X;
+  delete m_branches->v_jet_trk_vtx_Y;
+  delete m_branches->v_jet_trk_vtx_Z;
+
+  delete m_branches->v_jet_trk_pdg_id;
+  delete m_branches->v_jet_trk_barcode;
+  delete m_branches->v_jet_trk_parent_pdgid;
+  delete m_branches->v_jet_btag_ntrk;
+  delete m_branches->v_jet_ip3d_ntrk;
+  delete m_branches->v_jet_trk_IP3D_grade;
+  delete m_branches->v_jet_trk_IP3D_llr;
+  delete m_branches;
+
+  delete m_acc;
+}
+
+namespace {
+  // branch name function (lowercase the variable name)
+  std::string brnm(const std::string& pfx, std::string in) {
+    // std::transform(in.begin(), in.end(), in.begin(), ::tolower);
+    return pfx + in;
+  }
+}
+
+void TrackBranches::set_tree(TTree& output_tree,
+                             const std::string& prefix) const {
+  if (m_active) throw std::logic_error("tried to set tree twice");
+  m_active = true;
+
+#define ADD_SIMPLE(nm) \
+  output_tree.Branch(brnm(prefix, #nm).c_str(), &m_branches->nm)
+  // basic kinematics
+  ADD_SIMPLE(pt);
+  ADD_SIMPLE(eta);
+  ADD_SIMPLE(theta);
+  ADD_SIMPLE(phi);
+  ADD_SIMPLE(qoverp);
+
+  ADD_SIMPLE(charge);
+
+  ADD_SIMPLE(chi2);
+  ADD_SIMPLE(ndf);
+
+  ADD_SIMPLE(nNextToInnHits);
+  ADD_SIMPLE(nInnHits);
+  ADD_SIMPLE(nBLHits); // soo this will be deprecated
+  ADD_SIMPLE(nsharedBLHits);
+  ADD_SIMPLE(nsplitBLHits);
+  ADD_SIMPLE(nPixHits);
+  ADD_SIMPLE(nPixHoles);
+  ADD_SIMPLE(nsharedPixHits);
+  ADD_SIMPLE(nsplitPixHits);
+  ADD_SIMPLE(nSCTHits);
+  ADD_SIMPLE(nSCTHoles);
+  ADD_SIMPLE(nsharedSCTHits);
+
+  ADD_SIMPLE(expectBLayerHit);
+  ADD_SIMPLE(expectInnermostPixelLayerHit);
+  ADD_SIMPLE(expectNextToInnermostPixelLayerHit);
+
+  ADD_SIMPLE(d0);
+  ADD_SIMPLE(z0);
+  ADD_SIMPLE(ip3d_d0);
+  ADD_SIMPLE(ip3d_d02D);
+  ADD_SIMPLE(ip3d_z0);
+  ADD_SIMPLE(ip3d_d0sig);
+  ADD_SIMPLE(ip3d_z0sig);
+
+#undef ADD_SIMPLE
+
+
+  output_tree.Branch("jet_trk_algo", &m_branches->v_jet_trk_algo);
+
+  output_tree.Branch("jet_trk_vtx_X", &m_branches->v_jet_trk_vtx_X);
+  output_tree.Branch("jet_trk_vtx_Y", &m_branches->v_jet_trk_vtx_Y);
+  output_tree.Branch("jet_trk_vtx_Z", &m_branches->v_jet_trk_vtx_Z);
+
+  output_tree.Branch("jet_trk_pdg_id", &m_branches->v_jet_trk_pdg_id);
+  output_tree.Branch("jet_trk_barcode", &m_branches->v_jet_trk_barcode);
+  output_tree.Branch("jet_trk_parent_pdgid", &m_branches->v_jet_trk_parent_pdgid);
+  output_tree.Branch("jet_btag_ntrk", &m_branches->v_jet_btag_ntrk);
+  output_tree.Branch("jet_ip3d_ntrk", &m_branches->v_jet_ip3d_ntrk);
+  output_tree.Branch("jet_trk_ip3d_grade",&m_branches->v_jet_trk_IP3D_grade);
+  output_tree.Branch("jet_trk_ip3d_llr",&m_branches->v_jet_trk_IP3D_llr);
+}
+
+namespace {
+  // util function to get track values
+  int get(const xAOD::TrackParticle& part, xAOD::SummaryType info) {
+    uint8_t val;
+    bool ok = part.summaryValue(val, info);
+    if (!ok) throw std::logic_error("problem getting track summary value");
+    return val;
+  }
+}
+
+void TrackBranches::fill(const TrackBranches::PartVector& tracks, const xAOD::BTagging& btag, const xAOD::Jet& orig_jet) {
+  if (!m_active) return;
+
+  TLorentzVector jetDir;
+  jetDir.SetPtEtaPhiE(orig_jet.pt(), orig_jet.eta(), orig_jet.phi(), orig_jet.e());
+  Amg::Vector3D jetDirection(jetDir.Px(),jetDir.Py(),jetDir.Pz());
+  Amg::Vector3D unit = jetDirection.unit();
+
+
+
+
+  const int MISSING_VALUE = -999;
+
+  std::vector<int> j_trk_algo;
+  std::vector<int> j_trk_pdgid;
+  std::vector<int> j_trk_barcode;
+  std::vector<int> j_trk_parent_pdgid;
+  std::vector<float> j_trk_vtx_X;
+  std::vector<float> j_trk_vtx_Y;
+  std::vector<float> j_trk_vtx_Z;
+
+  typedef ElementLink<xAOD::TrackParticleContainer> TrackLink;
+  typedef std::vector<TrackLink> TrackLinks;
+
+  TrackLinks SV0Tracks;
+  TrackLinks SV1Tracks;
+  TrackLinks JFTracks;
+  TrackLinks IP3DTracks;
+  TrackLinks IP2DTracks;
+
+  if(btag.isAvailable<TrackLinks>("SV0_TrackParticleLinks")){  SV0Tracks = btag.SV0_TrackParticleLinks(); }
+
+  SV1Tracks = btag.SV1_TrackParticleLinks();
+  IP3DTracks = btag.auxdata<TrackLinks >("IP3D_TrackParticleLinks");
+  IP2DTracks = btag.auxdata<TrackLinks >("IP2D_TrackParticleLinks");
+
+  std::vector<int>   tmpGrading  = btag.auxdata<std::vector<int> >("IP3D_gradeOfTracks");
+  std::vector<float> tmpIP3DBwgt = btag.auxdata<std::vector<float> >("IP3D_weightBofTracks");
+  std::vector<float> tmpIP3DUwgt = btag.auxdata<std::vector<float> >("IP3D_weightUofTracks");
+
+  int j_ip3d_ntrk = tmpGrading.size();
+
+  std::vector<ElementLink<xAOD::BTagVertexContainer> > jfvertices;
+  jfvertices =  btag.auxdata<std::vector<ElementLink<xAOD::BTagVertexContainer> > >("JetFitter_JFvertices");
+
+  for (unsigned int jfv = 0; jfv < jfvertices.size(); jfv++) {
+      if (!jfvertices.at(jfv).isValid()) continue;
+      const xAOD::BTagVertex *tmpVertex = *(jfvertices.at(jfv));
+      const std::vector< ElementLink<xAOD::TrackParticleContainer> > tmpVect = tmpVertex->track_links(); // mod Remco
+      JFTracks.insert(JFTracks.end(), tmpVect.begin(), tmpVect.end()); // mod Remco
+
+  }
+
+
+  std::vector<float> pt;
+  std::vector<float> eta;
+  std::vector<float> theta;
+  std::vector<float> phi;
+  std::vector<float> qoverp;
+
+  std::vector<float> charge;
+
+  std::vector<float> chi2;
+  std::vector<float> ndf;
+
+  std::vector<int> nInnHits;
+  std::vector<int> nNextToInnHits;
+  std::vector<int> nBLHits;
+  std::vector<int> nsharedBLHits;
+  std::vector<int> nsplitBLHits;
+  std::vector<int> nPixHits;
+  std::vector<int> nPixHoles;
+  std::vector<int> nsharedPixHits;
+  std::vector<int> nsplitPixHits;
+  std::vector<int> nSCTHits;
+  std::vector<int> nSCTHoles;
+  std::vector<int> nsharedSCTHits;
+
+  std::vector<int> expectBLayerHit;
+  std::vector<int> expectInnermostPixelLayerHit;
+  std::vector<int> expectNextToInnermostPixelLayerHit;
+
+  std::vector<float> d0;
+  std::vector<float> z0;
+  std::vector<float> ip3d_d0;
+  std::vector<float> ip3d_d02D;
+  std::vector<float> ip3d_z0;
+  std::vector<float> ip3d_d0sig;
+  std::vector<float> ip3d_z0sig;
+
+  std::vector<int> j_trk_ip3d_grade;
+  std::vector<float> j_trk_ip3d_llr;
+
+  for (const auto* part: tracks) {
+    const auto* tmpTrk = dynamic_cast<const xAOD::TrackParticle*>(part);
+    if (!tmpTrk) throw std::logic_error("This isn't a track particle");
+    const auto& track = *tmpTrk;
+    pt.push_back(tmpTrk->pt());
+    eta.push_back(tmpTrk->eta());
+    theta.push_back(tmpTrk->theta());
+    phi.push_back(tmpTrk->phi());
+    qoverp.push_back(tmpTrk->qOverP());
+
+    charge.push_back(tmpTrk->charge());
+
+    chi2.push_back(tmpTrk->chiSquared());
+    ndf.push_back(tmpTrk->numberDoF());
+
+    nInnHits.push_back(get(track, xAOD::numberOfInnermostPixelLayerHits));
+    nNextToInnHits.push_back(get(track, xAOD::numberOfNextToInnermostPixelLayerHits));
+    nBLHits.push_back(get(track, xAOD::numberOfBLayerHits));
+    nsharedBLHits.push_back(get(track, xAOD::numberOfBLayerSharedHits));
+    nsplitBLHits.push_back(get(track, xAOD::numberOfBLayerSplitHits));
+    nPixHits.push_back(get(track, xAOD::numberOfPixelHits));
+    nPixHoles.push_back(get(track, xAOD::numberOfPixelHoles));
+    nsharedPixHits.push_back(get(track, xAOD::numberOfPixelSharedHits));
+    nsplitPixHits.push_back(get(track, xAOD::numberOfPixelSplitHits));
+    nSCTHits.push_back(get(track, xAOD::numberOfSCTHits));
+    nSCTHoles.push_back(get(track, xAOD::numberOfSCTHoles));
+    nsharedSCTHits.push_back(get(track, xAOD::numberOfSCTSharedHits));
+
+#define GET(NAME) NAME.push_back(get(track, xAOD::NAME))
+    GET(expectBLayerHit);
+    GET(expectInnermostPixelLayerHit);
+    GET(expectNextToInnermostPixelLayerHit);
+#undef GET
+
+
+     float trk_d0 = m_acc->d0(track);
+     float trk_d0Err = m_acc->d0_sigma(track);
+     float trk_z0 = m_acc->z0(track);
+     float trk_z0Err = m_acc->z0_sigma(track);
+
+      // sign of the impact parameter
+      double signOfIP = get_3d_lifetime_sign(track, unit);
+      double signOfIP2D = get_2d_lifetime_sign(track, unit);
+      double signOfZIP = get_z_lifetime_sign(track, unit);
+
+      // significances
+      double sIP = signOfIP * fabs(trk_d0);
+      double significance = signOfIP * fabs(trk_d0 / trk_d0Err);
+      double szIP = signOfZIP * fabs(trk_z0);
+      double z0Sig = signOfZIP * fabs(trk_z0 / trk_z0Err);
+
+      d0.push_back(track.d0());
+      z0.push_back(m_acc->z0(track));
+
+      ip3d_d0.push_back(sIP);
+      ip3d_z0.push_back(szIP);
+      ip3d_d02D.push_back(signOfIP2D*fabs(trk_d0));
+      ip3d_d0sig.push_back(significance);
+      ip3d_z0sig.push_back(z0Sig);
+
+
+    unsigned int trackAlgo = 0;
+
+    if (particleInCollection(tmpTrk, IP3DTracks)) trackAlgo += 1 << IP3D;
+    if (particleInCollection(tmpTrk, IP2DTracks)) trackAlgo += 1 << IP2D;
+    if (particleInCollection(tmpTrk, SV0Tracks)) trackAlgo +=1 << SV0;
+    if (particleInCollection(tmpTrk, SV1Tracks)) trackAlgo +=1 << SV1;
+    if (particleInCollection(tmpTrk, JFTracks)) trackAlgo +=1 << JF;
+
+    j_trk_algo.push_back(trackAlgo);
+
+    int index = -1;
+    for (unsigned int iT = 0; iT < IP3DTracks.size(); iT++) {
+      if (tmpTrk == *(IP3DTracks.at(iT))) {
+        index = iT;
+        break;
+        }
+    }
+
+    if (index!=-1) {
+      j_trk_ip3d_grade.push_back(tmpGrading.at(index));
+      float ip3d_llr = MISSING_VALUE;
+      if (tmpIP3DUwgt.at(index)!=0) ip3d_llr = log(tmpIP3DBwgt.at(index)/tmpIP3DUwgt.at(index));
+      j_trk_ip3d_llr.push_back(ip3d_llr);
+    } else {
+      j_trk_ip3d_grade.push_back(-10);
+      j_trk_ip3d_llr.push_back(MISSING_VALUE);
+    }
+
+
+
+    const xAOD::TruthParticle* truth = truthParticle(tmpTrk);
+
+    if (truth) {
+
+        j_trk_pdgid.push_back(truth->pdgId());
+        j_trk_barcode.push_back(truth->barcode());
+        j_trk_parent_pdgid.push_back( parent_classify(truth) );
+
+        if (truth->prodVtx()) {
+          j_trk_vtx_X.push_back(truth->prodVtx()->x());
+          j_trk_vtx_Y.push_back(truth->prodVtx()->y());
+          j_trk_vtx_Z.push_back(truth->prodVtx()->z());
+        }
+        else {
+          j_trk_vtx_X.push_back(-666);
+          j_trk_vtx_Y.push_back(-666);
+          j_trk_vtx_Z.push_back(-666);
+        }
+      }
+      else{
+        j_trk_pdgid.push_back(MISSING_VALUE);
+        j_trk_barcode.push_back(MISSING_VALUE);
+        j_trk_parent_pdgid.push_back( MISSING_VALUE );
+        j_trk_vtx_X.push_back(MISSING_VALUE);
+        j_trk_vtx_Y.push_back(MISSING_VALUE);
+        j_trk_vtx_Z.push_back(MISSING_VALUE);
+      }
+
+  } // end of track loop
+
+  // push back into member vectors
+#define PUSH(var) m_branches->var->push_back(std::move(var))
+  PUSH(pt);
+  PUSH(eta);
+  PUSH(theta);
+  PUSH(phi);
+  PUSH(qoverp);
+
+  PUSH(charge);
+
+  PUSH(chi2);
+  PUSH(ndf);
+
+  PUSH(nInnHits);
+  PUSH(nNextToInnHits);
+  PUSH(nBLHits);
+  PUSH(nsharedBLHits);
+  PUSH(nsplitBLHits);
+  PUSH(nPixHits);
+  PUSH(nPixHoles);
+  PUSH(nsharedPixHits);
+  PUSH(nsplitPixHits);
+  PUSH(nSCTHits);
+  PUSH(nSCTHoles);
+  PUSH(nsharedSCTHits);
+
+  PUSH(expectBLayerHit);
+  PUSH(expectInnermostPixelLayerHit);
+  PUSH(expectNextToInnermostPixelLayerHit);
+
+  PUSH(d0);
+  PUSH(z0);
+  PUSH(ip3d_d0);
+  PUSH(ip3d_d02D);
+  PUSH(ip3d_z0);
+  PUSH(ip3d_d0sig);
+  PUSH(ip3d_z0sig);
+
+#undef PUSH
+
+  m_branches->v_jet_btag_ntrk->push_back(tracks.size());
+  m_branches->v_jet_ip3d_ntrk->push_back(j_ip3d_ntrk);
+  m_branches->v_jet_trk_algo->push_back(j_trk_algo);
+  m_branches->v_jet_trk_pdg_id->push_back(j_trk_pdgid);
+  m_branches->v_jet_trk_parent_pdgid->push_back(j_trk_parent_pdgid);
+  m_branches->v_jet_trk_barcode->push_back(j_trk_barcode);
+
+  m_branches->v_jet_trk_vtx_X->push_back(j_trk_vtx_X);
+  m_branches->v_jet_trk_vtx_Y->push_back(j_trk_vtx_Y);
+  m_branches->v_jet_trk_vtx_Z->push_back(j_trk_vtx_Z);
+  m_branches->v_jet_trk_IP3D_grade->push_back(j_trk_ip3d_grade);
+  m_branches->v_jet_trk_IP3D_llr->push_back(j_trk_ip3d_llr);
+
+}
+
+void TrackBranches::clear() {
+#define CLEAR(name) m_branches->name->clear()
+  CLEAR(pt);
+  CLEAR(eta);
+  CLEAR(theta);
+  CLEAR(phi);
+  CLEAR(qoverp);
+
+  CLEAR(charge);
+
+  CLEAR(chi2);
+  CLEAR(ndf);
+
+  CLEAR(nInnHits);
+  CLEAR(nNextToInnHits);
+  CLEAR(nBLHits);
+  CLEAR(nsharedBLHits);
+  CLEAR(nsplitBLHits);
+  CLEAR(nPixHits);
+  CLEAR(nPixHoles);
+  CLEAR(nsharedPixHits);
+  CLEAR(nsplitPixHits);
+  CLEAR(nSCTHits);
+  CLEAR(nSCTHoles);
+  CLEAR(nsharedSCTHits);
+
+  CLEAR(expectBLayerHit);
+  CLEAR(expectInnermostPixelLayerHit);
+  CLEAR(expectNextToInnermostPixelLayerHit);
+
+  CLEAR(d0);
+  CLEAR(z0);
+  CLEAR(ip3d_d0);
+  CLEAR(ip3d_d02D);
+  CLEAR(ip3d_z0);
+  CLEAR(ip3d_d0sig);
+  CLEAR(ip3d_z0sig);
+
+#undef CLEAR
+
+  m_branches->v_jet_btag_ntrk->clear();
+  m_branches->v_jet_ip3d_ntrk->clear();
+  m_branches->v_jet_trk_algo->clear();
+
+  m_branches->v_jet_trk_vtx_X->clear();
+  m_branches->v_jet_trk_vtx_Y->clear();
+  m_branches->v_jet_trk_vtx_Z->clear();
+
+  m_branches->v_jet_trk_pdg_id->clear();
+  m_branches->v_jet_trk_barcode->clear();
+  m_branches->v_jet_trk_parent_pdgid->clear();
+  m_branches->v_jet_trk_IP3D_grade->clear();
+  m_branches->v_jet_trk_IP3D_llr->clear();
+
+}
+
+
+bool TrackBranches::particleInCollection( const xAOD::TrackParticle *trkPart, std::vector< ElementLink< xAOD::TrackParticleContainer > > trkColl ) {
+  for (unsigned int iT = 0; iT < trkColl.size(); iT++) {
+    if (trkPart == *(trkColl.at(iT))) return true;
+  }
+  return false;
+}
+
+
+
+const xAOD::TruthParticle* TrackBranches::truthParticle(const xAOD::TrackParticle *trkPart){
+  typedef ElementLink< xAOD::TruthParticleContainer > Link_t;
+  static const char *NAME = "truthParticleLink";
+  if( ! trkPart->isAvailable< Link_t >( NAME ) ) {
+    return 0;
+  }
+  const Link_t& link = trkPart->auxdata< Link_t >( NAME );
+  if (!link.isValid()) {
+    return 0;
+  }
+  return *link;
+}
+
+int TrackBranches :: parent_classify(const xAOD::TruthParticle *theParticle) {
+  const xAOD::TruthParticle *parent = 0; // the parent object
+  Int_t particle_id = 999;
+  Int_t parent_id = 999;
+
+  if (theParticle == NULL) return parent_id;
+
+  particle_id = theParticle->pdgId();
+  parent = theParticle->parent(0);
+  if (parent) parent_id = parent->pdgId();
+  else return parent_id;
+
+  while (fabs(parent_id) == fabs(particle_id) && fabs(parent_id) < 400 && fabs(parent_id) != 0) {
+    parent = parent->parent(0);
+    if (parent) parent_id = parent->pdgId();
+    else break;
+  }
+  return parent_id;
+}
